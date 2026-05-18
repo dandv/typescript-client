@@ -40,6 +40,7 @@ export type Vectorizer =
   | 'text2vec-huggingface'
   | 'text2vec-jinaai'
   | 'text2vec-nvidia'
+  | 'text2vec-digitalocean'
   | 'text2vec-mistral'
   | 'text2vec-model2vec'
   | 'text2vec-morph'
@@ -525,6 +526,20 @@ export type Text2VecMistralConfig = {
 };
 
 /**
+ * The configuration for text vectorization using the DigitalOcean module.
+ *
+ * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/digitalocean/embeddings) for detailed usage.
+ */
+export type Text2VecDigitalOceanConfig = {
+  /** The base URL to use where API requests should go. */
+  baseURL?: string;
+  /** The model to use. */
+  model?: string;
+  /** Whether to vectorize the collection name. */
+  vectorizeCollectionName?: boolean;
+};
+
+/**
  * The configuration for text vectorization using the Ollama module.
  *
  * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/ollama/embeddings) for detailed usage.
@@ -741,6 +756,8 @@ export type VectorizerConfigType<V> = V extends 'img2vec-neural'
   ? Text2VecJinaAIConfig | undefined
   : V extends 'text2vec-nvidia'
   ? Text2VecNvidiaConfig | undefined
+  : V extends 'text2vec-digitalocean'
+  ? Text2VecDigitalOceanConfig | undefined
   : V extends 'text2vec-mistral'
   ? Text2VecMistralConfig | undefined
   : V extends 'text2vec-model2vec'

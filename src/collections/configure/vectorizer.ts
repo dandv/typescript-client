@@ -638,6 +638,28 @@ const legacyVectors = {
     });
   },
   /**
+   * Create a `VectorConfigCreate` object with the vectorizer set to `'text2vec-digitalocean'`.
+   *
+   * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/digitalocean/embeddings) for detailed usage.
+   *
+   * @param {ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>} [opts] The configuration for the `text2vec-digitalocean` vectorizer.
+   * @returns {VectorConfigCreate<PrimitiveKeys<T>, N, I, 'text2vec-digitalocean'>} The configuration object.
+   */
+  text2VecDigitalOcean: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
+    opts?: ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>
+  ): VectorConfigCreate<PrimitiveKeys<T>, N, I, 'text2vec-digitalocean'> => {
+    const { name, quantizer, sourceProperties, vectorIndexConfig, ...config } = opts || {};
+    return makeVectorizer(name, {
+      quantizer,
+      sourceProperties,
+      vectorIndexConfig,
+      vectorizerConfig: {
+        name: 'text2vec-digitalocean',
+        config: Object.keys(config).length === 0 ? undefined : config,
+      },
+    });
+  },
+  /**
    * Create a `VectorConfigCreate` object with the vectorizer set to `'text2vec-mistral'`.
    *
    * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/mistral/embeddings) for detailed usage.
@@ -882,6 +904,9 @@ const __vectors_shaded = {
   text2VecOllama: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
     opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-ollama'>, 'vectorizeCollectionName'>
   ) => legacyVectors.text2VecOllama(opts),
+  text2VecDigitalOcean: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
+    opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>, 'vectorizeCollectionName'>
+  ) => legacyVectors.text2VecDigitalOcean(opts),
   text2VecMistral: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
     opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-mistral'>, 'vectorizeCollectionName'>
   ) => legacyVectors.text2VecMistral(opts),
