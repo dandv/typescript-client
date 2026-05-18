@@ -1422,8 +1422,8 @@ describe('Unit testing of the vectorizer factory class', () => {
     });
   });
 
-  it('should create the correct Text2VecDigitalOceanConfig type with defaults', () => {
-    const config = configure.vectors.text2VecDigitalOcean();
+  it('should create the correct Text2VecDigitalOceanConfig type with only the required model', () => {
+    const config = configure.vectors.text2VecDigitalOcean({ model: 'qwen3-embedding-0.6b' });
     expect(config).toEqual<VectorConfigCreate<never, undefined, 'hnsw', 'text2vec-digitalocean'>>({
       name: undefined,
       vectorIndex: {
@@ -1432,7 +1432,9 @@ describe('Unit testing of the vectorizer factory class', () => {
       },
       vectorizer: {
         name: 'text2vec-digitalocean',
-        config: undefined,
+        config: {
+          model: 'qwen3-embedding-0.6b',
+        },
       },
     });
   });

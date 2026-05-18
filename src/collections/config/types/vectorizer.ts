@@ -531,10 +531,10 @@ export type Text2VecMistralConfig = {
  * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/digitalocean/embeddings) for detailed usage.
  */
 export type Text2VecDigitalOceanConfig = {
-  /** The base URL to use where API requests should go. */
+  /** The base URL to use where API requests should go. Defaults to `https://inference.do-ai.run` on the server. */
   baseURL?: string;
-  /** The model to use. */
-  model?: string;
+  /** The model to use, e.g. `qwen3-embedding-0.6b`. Required by the server. */
+  model: string;
   /** Whether to vectorize the collection name. */
   vectorizeCollectionName?: boolean;
 };

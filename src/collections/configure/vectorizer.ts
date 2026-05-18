@@ -642,13 +642,13 @@ const legacyVectors = {
    *
    * See the [documentation](https://weaviate.io/developers/weaviate/model-providers/digitalocean/embeddings) for detailed usage.
    *
-   * @param {ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>} [opts] The configuration for the `text2vec-digitalocean` vectorizer.
+   * @param {ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>} opts The configuration for the `text2vec-digitalocean` vectorizer. `model` is required by the server.
    * @returns {VectorConfigCreate<PrimitiveKeys<T>, N, I, 'text2vec-digitalocean'>} The configuration object.
    */
   text2VecDigitalOcean: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
-    opts?: ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>
+    opts: ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>
   ): VectorConfigCreate<PrimitiveKeys<T>, N, I, 'text2vec-digitalocean'> => {
-    const { name, quantizer, sourceProperties, vectorIndexConfig, ...config } = opts || {};
+    const { name, quantizer, sourceProperties, vectorIndexConfig, ...config } = opts;
     return makeVectorizer(name, {
       quantizer,
       sourceProperties,
@@ -905,7 +905,7 @@ const __vectors_shaded = {
     opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-ollama'>, 'vectorizeCollectionName'>
   ) => legacyVectors.text2VecOllama(opts),
   text2VecDigitalOcean: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
-    opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>, 'vectorizeCollectionName'>
+    opts: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-digitalocean'>, 'vectorizeCollectionName'>
   ) => legacyVectors.text2VecDigitalOcean(opts),
   text2VecMistral: <T, N extends string | undefined = undefined, I extends VectorIndexType = 'hnsw'>(
     opts?: Omit<ConfigureTextVectorizerOptions<T, N, I, 'text2vec-mistral'>, 'vectorizeCollectionName'>
