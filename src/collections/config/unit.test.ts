@@ -459,7 +459,7 @@ describe('makeVectorsConfig', () => {
     expect(vec.vectorIndex).toBeUndefined();
 
     const { vectorsConfig } = makeVectorsConfig(vec);
-    const entry = vectorsConfig!['default'];
+    const entry = vectorsConfig!.default;
     expect(entry).toBeDefined();
     expect(entry.vectorIndexType).toBeUndefined();
     expect(entry.vectorIndexConfig).toBeUndefined();
@@ -474,7 +474,7 @@ describe('makeVectorsConfig', () => {
     expect(vec.vectorIndex).toBeDefined();
 
     const { vectorsConfig } = makeVectorsConfig(vec);
-    const entry = vectorsConfig!['default'];
+    const entry = vectorsConfig!.default;
     expect(entry.vectorIndexType).toBe('hnsw');
     expect(entry.vectorIndexConfig).toBeDefined();
   });
