@@ -12,7 +12,6 @@ env:
   WEAVIATE_135: 1.35.16
   WEAVIATE_136: 1.36.10
   WEAVIATE_137: 1.37.5-e0fe0d5.amd64
-  DEFAULT_VECTOR_INDEX: hfresh
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -64,6 +63,8 @@ jobs:
           npm ci
           ci/run_dependencies.sh ${{ matrix.versions.weaviate }}
       - name: "Run tests without authentication tests"
+        env:
+          DEFAULT_VECTOR_INDEX: hfresh
         run: WEAVIATE_VERSION=${{ matrix.versions.weaviate }} npm test
       - name: "Transpile the package"
         run: npm run build
@@ -99,6 +100,7 @@ jobs:
           WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           OKTA_CLIENT_SECRET: ${{ secrets.OKTA_CLIENT_SECRET }}
+          DEFAULT_VECTOR_INDEX: hfresh
         run: WEAVIATE_VERSION=${{ matrix.versions.weaviate }} npm test
       - name: "Stop Weaviate"
         run: ci/stop_dependencies.sh ${{ matrix.versions.weaviate }}
