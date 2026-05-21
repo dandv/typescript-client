@@ -7,10 +7,13 @@ import { DbVersion } from '../../../src/utils/dbVersion.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Version resolution
 //
-// WEAVIATE_VERSION follows the existing convention (see test/version.ts).
-// Default to 1.37.5-e0fe0d5.amd64 so a bare local run targets the new server.
+// WEAVIATE_VERSION follows the existing convention (see test/version.ts) and
+// is required — CI sets it; locally export it before running this test.
 // ─────────────────────────────────────────────────────────────────────────────
-const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION ?? '1.37.5-e0fe0d5.amd64';
+const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION;
+if (!WEAVIATE_VERSION) {
+  throw new Error('WEAVIATE_VERSION env var is required for this integration test');
+}
 const expectedDefault = process.env.DEFAULT_VECTOR_INDEX ?? 'hfresh';
 
 // Strip a trailing ".amd64" / ".arm64" platform suffix before parsing:
