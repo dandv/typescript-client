@@ -2590,4 +2590,34 @@ describe('Unit testing of the reranker factory class', () => {
       },
     });
   });
+
+  describe('makeVectorizer vectorIndex gate', () => {
+    it('should leave vectorIndex undefined when no index-related option is provided', () => {
+      const config = configure.vectors.text2VecOpenAI();
+      expect(config.vectorIndex).toBeUndefined();
+    });
+
+    it('should populate vectorIndex when vectorIndexConfig is provided', () => {
+      const config = configure.vectors.text2VecOpenAI({
+        vectorIndexConfig: configure.vectorIndex.hnsw(),
+      });
+      expect(config.vectorIndex).toBeDefined();
+      expect(config.vectorIndex!.name).toBe('hnsw');
+    });
+
+    it('should populate vectorIndex when quantizer is provided', () => {
+      const config = configure.vectors.text2VecOpenAI({
+        quantizer: configure.vectorIndex.quantizer.pq(),
+      });
+      expect(config.vectorIndex).toBeDefined();
+    });
+
+    it('should preserve explicit vectorIndexConfig name when flat is specified', () => {
+      const config = configure.vectors.text2VecOpenAI({
+        vectorIndexConfig: configure.vectorIndex.flat(),
+      });
+      expect(config.vectorIndex).toBeDefined();
+      expect(config.vectorIndex!.name).toBe('flat');
+    });
+  });
 });

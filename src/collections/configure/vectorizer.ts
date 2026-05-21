@@ -81,15 +81,22 @@ const makeVectorizer = <T, N extends string | undefined, I extends VectorIndexTy
   options?: VectorizerCreateOptions<PrimitiveKeys<T>[], I, V>,
   multiVec?: boolean
 ) => {
+  const userProvidedIndex =
+    options?.vectorIndexConfig !== undefined ||
+    options?.quantizer !== undefined ||
+    options?.encoding !== undefined ||
+    !!multiVec;
   return {
     name: name as N,
     properties: options?.sourceProperties,
-    vectorIndex: makeVectorIndex({
-      config: options?.vectorIndexConfig,
-      encoding: options?.encoding,
-      quantizer: options?.quantizer,
-      multiVec,
-    }) as ModuleConfig<any, VectorIndexConfigCreateType<I>>,
+    vectorIndex: userProvidedIndex
+      ? (makeVectorIndex({
+          config: options?.vectorIndexConfig,
+          encoding: options?.encoding,
+          quantizer: options?.quantizer,
+          multiVec,
+        }) as ModuleConfig<any, VectorIndexConfigCreateType<I>>)
+      : (undefined as any),
     vectorizer: options?.vectorizerConfig
       ? options.vectorizerConfig
       : { name: 'none' as V, config: undefined as VectorizerConfigType<V> },

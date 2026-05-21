@@ -72,14 +72,15 @@ export class MergeWithExisting {
         };
         current.vectorConfig = MergeWithExisting.vectors(current.vectorConfig, [updateVectorizers]);
       } else {
-        current.vectorIndexConfig =
-          update.vectorizers?.vectorIndex.name === 'hnsw'
+        current.vectorIndexConfig = update.vectorizers?.vectorIndex
+          ? update.vectorizers.vectorIndex.name === 'hnsw'
             ? MergeWithExisting.hnsw(current.vectorIndexConfig, update.vectorizers.vectorIndex.config)
-            : update.vectorizers?.vectorIndex.name === 'hfresh'
+            : update.vectorizers.vectorIndex.name === 'hfresh'
             ? MergeWithExisting.hfresh(current.vectorIndexConfig, update.vectorizers.vectorIndex.config)
-            : update.vectorizers?.vectorIndex.name === 'dynamic'
+            : update.vectorizers.vectorIndex.name === 'dynamic'
             ? MergeWithExisting.dynamic(current.vectorIndexConfig, update.vectorizers.vectorIndex.config)
-            : MergeWithExisting.flat(current.vectorIndexConfig, update.vectorizers.vectorIndex.config);
+            : MergeWithExisting.flat(current.vectorIndexConfig, update.vectorizers.vectorIndex.config)
+          : current.vectorIndexConfig;
       }
     }
     return current;
@@ -180,14 +181,15 @@ export class MergeWithExisting {
     update.forEach((v) => {
       const existing = current[v.name];
       if (existing !== undefined) {
-        current[v.name].vectorIndexConfig =
-          v.vectorIndex.name === 'hnsw'
+        current[v.name].vectorIndexConfig = v.vectorIndex
+          ? v.vectorIndex.name === 'hnsw'
             ? MergeWithExisting.hnsw(existing.vectorIndexConfig, v.vectorIndex.config)
             : v.vectorIndex.name === 'hfresh'
             ? MergeWithExisting.hfresh(existing.vectorIndexConfig, v.vectorIndex.config)
             : v.vectorIndex.name === 'dynamic'
             ? MergeWithExisting.dynamic(existing.vectorIndexConfig, v.vectorIndex.config)
-            : MergeWithExisting.flat(existing.vectorIndexConfig, v.vectorIndex.config);
+            : MergeWithExisting.flat(existing.vectorIndexConfig, v.vectorIndex.config)
+          : existing.vectorIndexConfig;
       }
     });
     return current;

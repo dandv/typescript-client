@@ -295,11 +295,11 @@ export const makeVectorsConfig = (
         },
       ];
   vectorizersConfig.forEach((v) => {
-    const vectorConfig: any = {
-      vectorIndexConfig: parseVectorIndex(v.vectorIndex),
-      vectorIndexType: v.vectorIndex.name,
-      vectorizer: {},
-    };
+    const vectorConfig: any = { vectorizer: {} };
+    if (v.vectorIndex) {
+      vectorConfig.vectorIndexConfig = parseVectorIndex(v.vectorIndex);
+      vectorConfig.vectorIndexType = v.vectorIndex.name;
+    }
     const vectorizer = v.vectorizer.name === 'text2vec-azure-openai' ? 'text2vec-openai' : v.vectorizer.name;
     vectorizers = [...vectorizers, vectorizer];
     vectorConfig.vectorizer[vectorizer] = {

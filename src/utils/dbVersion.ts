@@ -162,6 +162,13 @@ export class DbVersionSupport {
       supports: version.isAtLeast(1, 37, 2),
       message: this.errorMessage('Tokenize endpoint stopwords / stopwordPresets', version.show(), '1.37.2'),
     }));
+
+  supportsServerSideDefaultVectorIndexType = () =>
+    this.dbVersionProvider.getVersion().then((version) => ({
+      version,
+      supports: version.isAtLeast(1, 37, 5),
+      message: undefined,
+    }));
 }
 
 const EMPTY_VERSION = '';
