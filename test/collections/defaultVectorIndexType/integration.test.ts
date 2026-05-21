@@ -2,12 +2,37 @@ import { StartedWeaviateContainer, WeaviateContainer } from '@testcontainers/wea
 import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import weaviate from '../../../src/index.js';
+import { DbVersion } from '../../../src/utils/dbVersion.js';
 
-// Helper to spin up a container and return a connected client.
+// ─────────────────────────────────────────────────────────────────────────────
+// Version resolution
+//
+// WEAVIATE_VERSION follows the existing convention (see test/version.ts).
+// Default to 1.37.5-e0fe0d5.amd64 so a bare local run targets the new server.
+// ─────────────────────────────────────────────────────────────────────────────
+const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION ?? '1.37.5-e0fe0d5.amd64';
+
+// Strip a trailing ".amd64" / ".arm64" platform suffix before parsing:
+// DbVersion.fromString understands semver pre-release labels (e.g. -e0fe0d5)
+// but not dot-separated platform tokens appended after them.
+const versionForParsing = WEAVIATE_VERSION.replace(/\.(amd64|arm64|x86_64)$/, '');
+const parsedVersion = DbVersion.fromString(`v${versionForParsing}`);
+
+// >= 1.37.5: server applies DEFAULT_VECTOR_INDEX itself; client must NOT inject.
+// <  1.37.5: server has no such feature; client injects vectorIndexType = 'hnsw'.
+const serverAppliesDefault = parsedVersion.isAtLeast(1, 37, 5);
+
+// Use a linux/amd64 platform pin only when the image tag carries the ".amd64"
+// suffix — same narrowing the old test did, now applied to a single version.
+const platform = WEAVIATE_VERSION.includes('.amd64') ? 'linux/amd64' : undefined;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Container helper
+// ─────────────────────────────────────────────────────────────────────────────
 async function startContainer(
   image: string,
   env: Record<string, string> = {},
-  platform?: string
+  containerPlatform?: string
 ): Promise<{ container: StartedWeaviateContainer }> {
   let builder = new WeaviateContainer(image)
     .withWaitStrategy(Wait.forHttp('/v1/.well-known/ready', 8080).withStartupTimeout(60 * 1000))
@@ -17,123 +42,26 @@ async function startContainer(
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate',
       ...env,
     });
-  if (platform) {
-    builder = builder.withPlatform(platform) as typeof builder;
+  if (containerPlatform) {
+    builder = builder.withPlatform(containerPlatform) as typeof builder;
   }
   const container = await builder.start();
   return { container };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Server 1.37.4 — old server that does NOT apply a server-side default.
-// The client must inject vectorIndexType = 'hnsw' for each vector that has
-// no explicit choice.
+// Suite
 // ─────────────────────────────────────────────────────────────────────────────
-describe('defaultVectorIndexType — legacy server (1.37.4)', () => {
-  let container: StartedWeaviateContainer;
-
-  beforeAll(async () => {
-    ({ container } = await startContainer('semitechnologies/weaviate:1.37.4'));
-  }, 120_000);
-
-  afterAll(async () => {
-    await container?.stop();
-  });
-
-  it('no-explicit-index, selfProvided vectorizer → stored type is hnsw (client injected)', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
-    const name = `DefVit_Legacy_Self_${Date.now()}`;
-    try {
-      await client.collections.create({
-        name,
-        vectorizers: weaviate.configure.vectors.selfProvided(),
-      });
-      const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.default.indexType).toEqual('hnsw');
-    } finally {
-      await client.collections.delete(name).catch(() => undefined);
-    }
-  });
-
-  it('no-explicit-index, named selfProvided vector → stored type is hnsw (client injected)', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
-    const name = `DefVit_Legacy_Named_${Date.now()}`;
-    try {
-      await client.collections.create({
-        name,
-        vectorizers: weaviate.configure.vectors.selfProvided({ name: 'main' }),
-      });
-      const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.main.indexType).toEqual('hnsw');
-    } finally {
-      await client.collections.delete(name).catch(() => undefined);
-    }
-  });
-
-  it('explicit flat index, selfProvided vectorizer → stored type is flat (explicit choice preserved)', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
-    const name = `DefVit_Legacy_Flat_${Date.now()}`;
-    try {
-      await client.collections.create({
-        name,
-        vectorizers: weaviate.configure.vectors.selfProvided({
-          vectorIndexConfig: weaviate.configure.vectorIndex.flat(),
-        }),
-      });
-      const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.default.indexType).toEqual('flat');
-    } finally {
-      await client.collections.delete(name).catch(() => undefined);
-    }
-  });
-
-  it('explicit flat index, named selfProvided vector → stored type is flat (explicit choice preserved)', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
-    const name = `DefVit_Legacy_NamedFlat_${Date.now()}`;
-    try {
-      await client.collections.create({
-        name,
-        vectorizers: weaviate.configure.vectors.selfProvided({
-          name: 'main',
-          vectorIndexConfig: weaviate.configure.vectorIndex.flat(),
-        }),
-      });
-      const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.main.indexType).toEqual('flat');
-    } finally {
-      await client.collections.delete(name).catch(() => undefined);
-    }
-  });
-}, 180_000);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Server 1.37.5 with DEFAULT_VECTOR_INDEX=flat — new server that applies its
-// own default. The client must NOT inject anything; the server returns 'flat'.
-// ─────────────────────────────────────────────────────────────────────────────
-describe('defaultVectorIndexType — new server (1.37.5) with DEFAULT_VECTOR_INDEX=flat', () => {
+describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDefault=${serverAppliesDefault})`, () => {
   let container: StartedWeaviateContainer;
 
   beforeAll(async () => {
     ({ container } = await startContainer(
-      'semitechnologies/weaviate:1.37.5-e0fe0d5.amd64',
+      `semitechnologies/weaviate:${WEAVIATE_VERSION}`,
+      // Older servers ignore unknown env vars; always pass the flag so we don't
+      // need a separate image-launch path.
       { DEFAULT_VECTOR_INDEX: 'flat' },
-      'linux/amd64'
+      platform
     ));
   }, 120_000);
 
@@ -141,51 +69,58 @@ describe('defaultVectorIndexType — new server (1.37.5) with DEFAULT_VECTOR_IND
     await container?.stop();
   });
 
-  it('no-explicit-index, selfProvided vectorizer → stored type is flat (server-side default applied)', async () => {
+  // ── Scenario A: no explicit vectorIndexConfig ──────────────────────────────
+
+  it('Scenario A — selfProvided (default vector), no explicit index config', async () => {
     const client = await weaviate.connectToLocal({
       host: container.getHost(),
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_New_Self_${Date.now()}`;
+    const name = `DefVit_A_Self_${Date.now()}`;
     try {
       await client.collections.create({
         name,
         vectorizers: weaviate.configure.vectors.selfProvided(),
       });
       const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.default.indexType).toEqual('flat');
+      // New server: DEFAULT_VECTOR_INDEX=flat propagates → 'flat'
+      // Old server: client injected 'hnsw' as the safe fallback
+      expect(config.vectorizers.default.indexType).toEqual(serverAppliesDefault ? 'flat' : 'hnsw');
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
   });
 
-  it('no-explicit-index, named selfProvided vector → stored type is flat (server-side default applied)', async () => {
+  it('Scenario A — selfProvided (named vector "main"), no explicit index config', async () => {
     const client = await weaviate.connectToLocal({
       host: container.getHost(),
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_New_Named_${Date.now()}`;
+    const name = `DefVit_A_Named_${Date.now()}`;
     try {
       await client.collections.create({
         name,
         vectorizers: weaviate.configure.vectors.selfProvided({ name: 'main' }),
       });
       const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.main.indexType).toEqual('flat');
+      expect(config.vectorizers.main.indexType).toEqual(serverAppliesDefault ? 'flat' : 'hnsw');
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
   });
 
-  it('explicit flat index, selfProvided vectorizer → stored type is flat (explicit choice preserved)', async () => {
+  // ── Scenario B: explicit flat vectorIndexConfig ────────────────────────────
+  // Explicit choice must be preserved on every version.
+
+  it('Scenario B — selfProvided (default vector), explicit flat index config', async () => {
     const client = await weaviate.connectToLocal({
       host: container.getHost(),
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_New_Flat_${Date.now()}`;
+    const name = `DefVit_B_Self_${Date.now()}`;
     try {
       await client.collections.create({
         name,
@@ -200,13 +135,13 @@ describe('defaultVectorIndexType — new server (1.37.5) with DEFAULT_VECTOR_IND
     }
   });
 
-  it('explicit flat index, named selfProvided vector → stored type is flat (explicit choice preserved)', async () => {
+  it('Scenario B — selfProvided (named vector "main"), explicit flat index config', async () => {
     const client = await weaviate.connectToLocal({
       host: container.getHost(),
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_New_NamedFlat_${Date.now()}`;
+    const name = `DefVit_B_Named_${Date.now()}`;
     try {
       await client.collections.create({
         name,
