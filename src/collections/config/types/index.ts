@@ -71,10 +71,7 @@ export type ReplicationDeletionStrategy =
   | 'NoAutomatedResolution'
   | 'TimeBasedResolution';
 
-export type AsyncReplicationConfig = Omit<
-  WeaviateAsyncReplicationConfig,
-  'maxWorkers' | 'aliveNodesCheckingFrequency'
->;
+export type AsyncReplicationConfig = WeaviateAsyncReplicationConfig;
 
 export type ReplicationConfig = {
   asyncEnabled: boolean;
