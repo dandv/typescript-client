@@ -454,7 +454,7 @@ describe('Unit testing of the MergeWithExisting class', () => {
 });
 
 describe('makeVectorsConfig', () => {
-  it('should omit vectorIndexType and vectorIndexConfig when vectorIndex is undefined', () => {
+  it('should omit vectorIndexType and vectorIndexConfig when no index options are provided', () => {
     const vec = configure.vectors.text2VecOpenAI({ name: 'default' });
     expect(vec.vectorIndex).toBeUndefined();
 

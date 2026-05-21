@@ -53,6 +53,16 @@ async function startContainer(
   return { container };
 }
 
+/**
+ * Assert that a collection's stored index type matches what the server/client
+ * should have applied given the running version:
+ *   - server >= 1.37.5 → server applied DEFAULT_VECTOR_INDEX (e.g. 'hfresh')
+ *   - server <  1.37.5 → client injected 'hnsw' as legacy default
+ */
+function assertDefaultIndexType(actual: string) {
+  expect(actual).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Suite
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,9 +98,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
         vectorizers: weaviate.configure.vectors.selfProvided(),
       });
       const config = await client.collections.use(name).config.get();
-      // New server: DEFAULT_VECTOR_INDEX=flat propagates → 'flat'
-      // Old server: client injected 'hnsw' as the safe fallback
-      expect(config.vectorizers.default.indexType).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
+      assertDefaultIndexType(config.vectorizers.default.indexType);
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
@@ -109,7 +117,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
         vectorizers: weaviate.configure.vectors.selfProvided({ name: 'main' }),
       });
       const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.main.indexType).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
+      assertDefaultIndexType(config.vectorizers.main.indexType);
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
