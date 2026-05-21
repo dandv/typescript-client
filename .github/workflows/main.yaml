@@ -12,6 +12,7 @@ env:
   WEAVIATE_135: 1.35.16
   WEAVIATE_136: 1.36.10
   WEAVIATE_137: 1.37.5-e0fe0d5.amd64
+  DEFAULT_VECTOR_INDEX: hfresh
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

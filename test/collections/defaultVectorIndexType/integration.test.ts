@@ -11,6 +11,7 @@ import { DbVersion } from '../../../src/utils/dbVersion.js';
 // Default to 1.37.5-e0fe0d5.amd64 so a bare local run targets the new server.
 // ─────────────────────────────────────────────────────────────────────────────
 const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION ?? '1.37.5-e0fe0d5.amd64';
+const expectedDefault = process.env.DEFAULT_VECTOR_INDEX ?? 'hfresh';
 
 // Strip a trailing ".amd64" / ".arm64" platform suffix before parsing:
 // DbVersion.fromString understands semver pre-release labels (e.g. -e0fe0d5)
@@ -60,7 +61,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       `semitechnologies/weaviate:${WEAVIATE_VERSION}`,
       // Older servers ignore unknown env vars; always pass the flag so we don't
       // need a separate image-launch path.
-      { DEFAULT_VECTOR_INDEX: 'flat' },
+      { DEFAULT_VECTOR_INDEX: expectedDefault },
       platform
     ));
   }, 120_000);
@@ -86,7 +87,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       const config = await client.collections.use(name).config.get();
       // New server: DEFAULT_VECTOR_INDEX=flat propagates → 'flat'
       // Old server: client injected 'hnsw' as the safe fallback
-      expect(config.vectorizers.default.indexType).toEqual(serverAppliesDefault ? 'flat' : 'hnsw');
+      expect(config.vectorizers.default.indexType).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
@@ -105,7 +106,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
         vectorizers: weaviate.configure.vectors.selfProvided({ name: 'main' }),
       });
       const config = await client.collections.use(name).config.get();
-      expect(config.vectorizers.main.indexType).toEqual(serverAppliesDefault ? 'flat' : 'hnsw');
+      expect(config.vectorizers.main.indexType).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
