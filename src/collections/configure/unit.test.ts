@@ -98,7 +98,7 @@ describe('Unit testing of the configure & reconfigure factory classes', () => {
       deletionStrategy: 'DeleteOnConflict',
       factor: 2,
       asyncConfig: {
-        maxWorkers: 10,
+        propagationConcurrency: 4,
       },
     });
     expect(config).toEqual<ReplicationConfigCreate>({
@@ -106,7 +106,7 @@ describe('Unit testing of the configure & reconfigure factory classes', () => {
       deletionStrategy: 'DeleteOnConflict',
       factor: 2,
       asyncConfig: {
-        maxWorkers: 10,
+        propagationConcurrency: 4,
       },
     });
   });
@@ -117,7 +117,7 @@ describe('Unit testing of the configure & reconfigure factory classes', () => {
       deletionStrategy: 'DeleteOnConflict',
       factor: 2,
       asyncConfig: {
-        maxWorkers: 10,
+        propagationConcurrency: 4,
       },
     });
     expect(config).toEqual<ReplicationConfigCreate>({
@@ -125,7 +125,7 @@ describe('Unit testing of the configure & reconfigure factory classes', () => {
       deletionStrategy: 'DeleteOnConflict',
       factor: 2,
       asyncConfig: {
-        maxWorkers: 10,
+        propagationConcurrency: 4,
       },
     });
   });
