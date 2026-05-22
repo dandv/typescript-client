@@ -1258,10 +1258,8 @@ describe('Unit testing of the vectorizer factory class', () => {
     const config = configure.vectors.text2VecDigitalOcean({ model: 'qwen3-embedding-0.6b' });
     expect(config).toEqual<VectorConfigCreate<never, undefined, 'hnsw', 'text2vec-digitalocean'>>({
       name: undefined,
-      vectorIndex: {
-        name: 'hnsw',
-        config: undefined,
-      },
+      properties: undefined,
+      vectorIndex: undefined,
       vectorizer: {
         name: 'text2vec-digitalocean',
         config: {
@@ -1279,10 +1277,8 @@ describe('Unit testing of the vectorizer factory class', () => {
     });
     expect(config).toEqual<VectorConfigCreate<never, 'test', 'hnsw', 'text2vec-digitalocean'>>({
       name: 'test',
-      vectorIndex: {
-        name: 'hnsw',
-        config: undefined,
-      },
+      properties: undefined,
+      vectorIndex: undefined,
       vectorizer: {
         name: 'text2vec-digitalocean',
         config: {
