@@ -1,88 +1,45 @@
-import { StartedWeaviateContainer, WeaviateContainer } from '@testcontainers/weaviate';
-import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import weaviate from '../../../src/index.js';
+import weaviate, { WeaviateClient } from '../../../src/index.js';
 import { DbVersion } from '../../../src/utils/dbVersion.js';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Version resolution
-//
-// ─────────────────────────────────────────────────────────────────────────────
-const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION;
-if (!WEAVIATE_VERSION) {
-  throw new Error('WEAVIATE_VERSION env var is required for this integration test');
-}
-const expectedDefault = 'hfresh';
-const parsedVersion = DbVersion.fromString(`v${WEAVIATE_VERSION}`);
+let client: WeaviateClient;
+let serverVersion: DbVersion;
 
-// >= 1.37.5: server applies DEFAULT_VECTOR_INDEX itself; client must NOT inject.
-// <  1.37.5: server has no such feature; client injects vectorIndexType = 'hnsw'.
-const serverAppliesDefault = parsedVersion.isAtLeast(1, 37, 5);
-
-// Use a linux/amd64 platform pin only when the image tag carries the ".amd64" suffix.
-const platform = WEAVIATE_VERSION.includes('.amd64') ? 'linux/amd64' : undefined;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Container helper
-// ─────────────────────────────────────────────────────────────────────────────
-async function startContainer(
-  image: string,
-  env: Record<string, string> = {},
-  containerPlatform?: string
-): Promise<{ container: StartedWeaviateContainer }> {
-  let builder = new WeaviateContainer(image)
-    .withWaitStrategy(Wait.forHttp('/v1/.well-known/ready', 8080).withStartupTimeout(60 * 1000))
-    .withExposedPorts(8080, 50051)
-    .withEnvironment({
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true',
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate',
-      ...env,
-    });
-  if (containerPlatform) {
-    builder = builder.withPlatform(containerPlatform) as typeof builder;
-  }
-  const container = await builder.start();
-  return { container };
+function expectedDefaultIndexType(version: DbVersion): 'hnsw' | 'hfresh' {
+  // 1.38+ defaults to hfresh; older versions default to hnsw.
+  return version.isAtLeast(1, 38, 0) ? 'hfresh' : 'hnsw';
 }
 
 /**
  * Assert that a collection's stored index type matches what the server/client
  * should have applied given the running version:
- *   - server >= 1.37.5 → server applied DEFAULT_VECTOR_INDEX (e.g. 'hfresh')
- *   - server <  1.37.5 → client injected 'hnsw' as legacy default
+ *   - on newer servers, expect hfresh default
+ *   - on older servers, expect legacy hnsw default
  */
 function assertDefaultIndexType(actual: string) {
-  expect(actual).toEqual(serverAppliesDefault ? expectedDefault : 'hnsw');
+  expect(actual).toEqual(expectedDefaultIndexType(serverVersion));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Suite
 // ─────────────────────────────────────────────────────────────────────────────
-describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDefault=${serverAppliesDefault})`, () => {
-  let container: StartedWeaviateContainer;
-
+describe('defaultVectorIndexType', () => {
   beforeAll(async () => {
-    ({ container } = await startContainer(
-      `semitechnologies/weaviate:${WEAVIATE_VERSION}`,
-      // Older servers ignore unknown env vars; always pass the flag so we don't
-      // need a separate image-launch path.
-      { DEFAULT_VECTOR_INDEX: expectedDefault },
-      platform
-    ));
-  }, 120_000);
+    client = await weaviate.connectToLocal();
+    const meta = await client.getMeta();
+    if (!meta.version) {
+      throw new Error('Weaviate meta endpoint did not return a version');
+    }
+    serverVersion = DbVersion.fromString(meta.version);
+  }, 60_000);
 
   afterAll(async () => {
-    await container?.stop();
+    await client?.close();
   });
 
   // ── Scenario A: no explicit vectorIndexConfig ──────────────────────────────
 
   it('Scenario A — selfProvided (default vector), no explicit index config', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
     const name = `DefaultVectorIndexType_A_Self_${Date.now()}`;
     try {
       await client.collections.create({
@@ -97,11 +54,6 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
   });
 
   it('Scenario A — selfProvided (named vector "main"), no explicit index config', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
     const name = `DefaultVectorIndexType_A_Named_${Date.now()}`;
     try {
       await client.collections.create({
@@ -119,11 +71,6 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
   // Explicit choice must be preserved on every version.
 
   it('Scenario B — selfProvided (default vector), explicit flat index config', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
     const name = `DefaultVectorIndexType_B_Self_${Date.now()}`;
     try {
       await client.collections.create({
@@ -140,11 +87,6 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
   });
 
   it('Scenario B — selfProvided (named vector "main"), explicit flat index config', async () => {
-    const client = await weaviate.connectToLocal({
-      host: container.getHost(),
-      port: container.getMappedPort(8080),
-      grpcPort: container.getMappedPort(50051),
-    });
     const name = `DefaultVectorIndexType_B_Named_${Date.now()}`;
     try {
       await client.collections.create({
@@ -160,4 +102,4 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       await client.collections.delete(name).catch(() => undefined);
     }
   });
-}, 180_000);
+}, 120_000);
