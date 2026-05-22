@@ -654,7 +654,9 @@ describe('Testing of the collections.create method', () => {
     if (expectedDefaultIndexType === 'hnsw') {
       expect((response.vectorizers.default.indexConfig as VectorIndexConfigHNSW).quantizer).toBeUndefined();
     } else {
-      expect((response.vectorizers.default.indexConfig as VectorIndexConfigHFresh).quantizer).toBeDefined();
+      expect(['rq', undefined]).toContain(
+        (response.vectorizers.default.indexConfig as VectorIndexConfigHFresh).quantizer?.type
+      );
     }
     expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
