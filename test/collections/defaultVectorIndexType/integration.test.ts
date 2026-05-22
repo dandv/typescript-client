@@ -7,27 +7,19 @@ import { DbVersion } from '../../../src/utils/dbVersion.js';
 // ─────────────────────────────────────────────────────────────────────────────
 // Version resolution
 //
-// WEAVIATE_VERSION follows the existing convention (see test/version.ts) and
-// is required — CI sets it; locally export it before running this test.
 // ─────────────────────────────────────────────────────────────────────────────
 const WEAVIATE_VERSION = process.env.WEAVIATE_VERSION;
 if (!WEAVIATE_VERSION) {
   throw new Error('WEAVIATE_VERSION env var is required for this integration test');
 }
-const expectedDefault = process.env.DEFAULT_VECTOR_INDEX ?? 'hfresh';
-
-// Strip a trailing ".amd64" / ".arm64" platform suffix before parsing:
-// DbVersion.fromString understands semver pre-release labels (e.g. -e0fe0d5)
-// but not dot-separated platform tokens appended after them.
-const versionForParsing = WEAVIATE_VERSION.replace(/\.(amd64|arm64|x86_64)$/, '');
-const parsedVersion = DbVersion.fromString(`v${versionForParsing}`);
+const expectedDefault = 'hfresh';
+const parsedVersion = DbVersion.fromString(`v${WEAVIATE_VERSION}`);
 
 // >= 1.37.5: server applies DEFAULT_VECTOR_INDEX itself; client must NOT inject.
 // <  1.37.5: server has no such feature; client injects vectorIndexType = 'hnsw'.
 const serverAppliesDefault = parsedVersion.isAtLeast(1, 37, 5);
 
-// Use a linux/amd64 platform pin only when the image tag carries the ".amd64"
-// suffix — same narrowing the old test did, now applied to a single version.
+// Use a linux/amd64 platform pin only when the image tag carries the ".amd64" suffix.
 const platform = WEAVIATE_VERSION.includes('.amd64') ? 'linux/amd64' : undefined;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,7 +83,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_A_Self_${Date.now()}`;
+    const name = `DefaultVectorIndexType_A_Self_${Date.now()}`;
     try {
       await client.collections.create({
         name,
@@ -110,7 +102,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_A_Named_${Date.now()}`;
+    const name = `DefaultVectorIndexType_A_Named_${Date.now()}`;
     try {
       await client.collections.create({
         name,
@@ -132,7 +124,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_B_Self_${Date.now()}`;
+    const name = `DefaultVectorIndexType_B_Self_${Date.now()}`;
     try {
       await client.collections.create({
         name,
@@ -153,7 +145,7 @@ describe(`defaultVectorIndexType — server ${WEAVIATE_VERSION} (serverAppliesDe
       port: container.getMappedPort(8080),
       grpcPort: container.getMappedPort(50051),
     });
-    const name = `DefVit_B_Named_${Date.now()}`;
+    const name = `DefaultVectorIndexType_B_Named_${Date.now()}`;
     try {
       await client.collections.create({
         name,
