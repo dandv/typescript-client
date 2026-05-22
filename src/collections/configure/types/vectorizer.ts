@@ -69,7 +69,7 @@ export type VectorConfigCreate<
   name: N;
   properties?: P[];
   vectorizer: ModuleConfig<V, VectorizerConfigType<V>>;
-  vectorIndex: ModuleConfig<I, VectorIndexConfigCreateType<I>>;
+  vectorIndex?: ModuleConfig<I, VectorIndexConfigCreateType<I>>;
 };
 
 export type VectorConfigUpdate<N extends string | undefined, I extends VectorIndexType> = {

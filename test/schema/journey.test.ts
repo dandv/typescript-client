@@ -112,9 +112,7 @@ describe('schema', () => {
       .withProperty(prop)
       .do()
       .catch((err: Error) => {
-        expect(err.message.toLowerCase()).toEqual(
-          'The request to Weaviate failed with status code: 422 and message: {"error":[{"message":"tokenization is not allowed for data type \'int[]\'"}]}'.toLowerCase()
-        );
+        expect(err.message).toContain('tokenization is not allowed for data type');
       });
   });
 

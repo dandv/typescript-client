@@ -51,8 +51,15 @@ const config = <T>(
         .withProperty(resolveReference<any>(reference))
         .do()
         .then(() => {}),
-    addVector: (vectors: VectorizersConfigAdd<T>) => {
+    addVector: async (vectors: VectorizersConfigAdd<T>) => {
       const { vectorsConfig } = makeVectorsConfig(vectors);
+      const { supports: serverAppliesDefaultVIT } =
+        await dbVersionSupport.supportsServerSideDefaultVectorIndexType();
+      if (!serverAppliesDefaultVIT && vectorsConfig) {
+        for (const v of Object.values(vectorsConfig)) {
+          if (!(v as any).vectorIndexType) (v as any).vectorIndexType = 'hnsw';
+        }
+      }
       return new VectorAdder(connection).withClassName(name).withVectors(vectorsConfig).do();
     },
     get: () => getRaw().then(classToCollection<T>),

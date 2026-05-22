@@ -5,8 +5,10 @@ import {
   WeaviateMultiTenancyConfig,
   WeaviateVectorsConfig,
 } from '../../openapi/types';
+import { configure } from '../configure/index.js';
 import { MergeWithExisting } from './classes';
 import { GenerativeCohereConfig, RerankerCohereConfig } from './types';
+import { makeVectorsConfig } from './utils.js';
 
 describe('Unit testing of the MergeWithExisting class', () => {
   const deepCopy = (config: any) => JSON.parse(JSON.stringify(config));
@@ -448,5 +450,32 @@ describe('Unit testing of the MergeWithExisting class', () => {
         model: 'other',
       } as RerankerCohereConfig,
     });
+  });
+});
+
+describe('makeVectorsConfig', () => {
+  it('should omit vectorIndexType and vectorIndexConfig when no index options are provided', () => {
+    const vec = configure.vectors.text2VecOpenAI({ name: 'default' });
+    expect(vec.vectorIndex).toBeUndefined();
+
+    const { vectorsConfig } = makeVectorsConfig(vec);
+    const entry = vectorsConfig!.default;
+    expect(entry).toBeDefined();
+    expect(entry.vectorIndexType).toBeUndefined();
+    expect(entry.vectorIndexConfig).toBeUndefined();
+    expect(entry.vectorizer).toBeDefined();
+  });
+
+  it('should include vectorIndexType and vectorIndexConfig when vectorIndex is defined', () => {
+    const vec = configure.vectors.text2VecOpenAI({
+      name: 'default',
+      vectorIndexConfig: configure.vectorIndex.hnsw(),
+    });
+    expect(vec.vectorIndex).toBeDefined();
+
+    const { vectorsConfig } = makeVectorsConfig(vec);
+    const entry = vectorsConfig!.default;
+    expect(entry.vectorIndexType).toBe('hnsw');
+    expect(entry.vectorIndexConfig).toBeDefined();
   });
 });

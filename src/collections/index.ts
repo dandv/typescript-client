@@ -105,6 +105,13 @@ const collections = (connection: Connection, dbVersionSupport: DbVersionSupport)
       const { vectorsConfig, vectorizers } = config.vectorizers
         ? makeVectorsConfig(config.vectorizers)
         : { vectorsConfig: undefined, vectorizers: [] };
+      const { supports: serverAppliesDevaultVIT } =
+        await dbVersionSupport.supportsServerSideDefaultVectorIndexType();
+      if (!serverAppliesDevaultVIT && vectorsConfig) {
+        for (const v of Object.values(vectorsConfig)) {
+          if (!(v as any).vectorIndexType) (v as any).vectorIndexType = 'hnsw';
+        }
+      }
       schema.vectorConfig = vectorsConfig;
 
       const properties = config.properties

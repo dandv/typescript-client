@@ -1592,11 +1592,6 @@ export interface definitions {
   ReplicationAsyncConfig: {
     /**
      * Format: int64
-     * @description Maximum number of async replication workers.
-     */
-    maxWorkers?: number;
-    /**
-     * Format: int64
      * @description Height of the hashtree used for diffing.
      */
     hashtreeHeight?: number;
@@ -1610,11 +1605,6 @@ export interface definitions {
      * @description Frequency in milliseconds at which async replication runs while propagation is active.
      */
     frequencyWhilePropagating?: number;
-    /**
-     * Format: int64
-     * @description Interval in milliseconds at which liveness of target nodes is checked.
-     */
-    aliveNodesCheckingFrequency?: number;
     /**
      * Format: int64
      * @description Interval in seconds at which async replication logs its status.
