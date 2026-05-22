@@ -8,6 +8,7 @@ import weaviate, {
   PropertyConfig,
   Text2VecContextionaryConfig,
   Text2VecOpenAIConfig,
+  VectorIndexConfigHFresh,
   VectorIndexConfigHNSW,
   WeaviateClient,
 } from '../../src/index';
@@ -16,6 +17,7 @@ describe('Testing of the collections.create method', () => {
   let cluster: WeaviateClient;
   let contextionary: WeaviateClient;
   let openai: WeaviateClient;
+  let expectedDefaultIndexType: 'hnsw' | 'hfresh';
 
   beforeAll(async () => {
     cluster = await weaviate.connectToLocal({
@@ -30,6 +32,9 @@ describe('Testing of the collections.create method', () => {
       port: 8086,
       grpcPort: 50051,
     });
+    expectedDefaultIndexType = (await contextionary.getWeaviateVersion()).isAtLeast(1, 37, 5)
+      ? 'hfresh'
+      : 'hnsw';
   });
 
   afterAll(() =>
@@ -61,7 +66,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].name).toEqual('testProp');
     expect(response.properties[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -83,7 +88,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].name).toEqual('testProp');
     expect(response.properties[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -170,7 +175,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.name).toEqual(collectionName);
     expect(response.properties?.length).toEqual(0);
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -185,7 +190,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.name).toEqual(collectionName);
     expect(response.properties?.length).toEqual(0);
     expect(response.vectorizers.custom.indexConfig).toBeDefined();
-    expect(response.vectorizers.custom.indexType).toEqual('hnsw');
+    expect(response.vectorizers.custom.indexType).toEqual(expectedDefaultIndexType);
   });
 
   it('should be able to create a simple collection without a generic using a schema var', async () => {
@@ -208,7 +213,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].name).toEqual('testProp');
     expect(response.properties[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -235,7 +240,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].name).toEqual('testProp');
     expect(response.properties[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -262,7 +267,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].name).toEqual('testProp');
     expect(response.properties[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -298,7 +303,7 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties[0].nestedProperties?.length).toEqual(1);
     expect(response.properties[0].nestedProperties?.[0].name).toEqual('nestedProp');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
   });
 
@@ -646,8 +651,12 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties?.[0].name).toEqual('testProp');
     expect(response.properties?.[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect((response.vectorizers.default.indexConfig as VectorIndexConfigHNSW).quantizer).toBeUndefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    if (expectedDefaultIndexType === 'hnsw') {
+      expect((response.vectorizers.default.indexConfig as VectorIndexConfigHNSW).quantizer).toBeUndefined();
+    } else {
+      expect((response.vectorizers.default.indexConfig as VectorIndexConfigHFresh).quantizer).toBeDefined();
+    }
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-contextionary');
     expect(
       (response.vectorizers.default.vectorizer.config as Text2VecContextionaryConfig).vectorizeCollectionName
@@ -674,8 +683,12 @@ describe('Testing of the collections.create method', () => {
     expect(response.properties?.[0].name).toEqual('testProp');
     expect(response.properties?.[0].dataType).toEqual('text');
     expect(response.vectorizers.default.indexConfig).toBeDefined();
-    expect((response.vectorizers.default.indexConfig as VectorIndexConfigHNSW).quantizer).toBeUndefined();
-    expect(response.vectorizers.default.indexType).toEqual('hnsw');
+    if (expectedDefaultIndexType === 'hnsw') {
+      expect((response.vectorizers.default.indexConfig as VectorIndexConfigHNSW).quantizer).toBeUndefined();
+    } else {
+      expect((response.vectorizers.default.indexConfig as VectorIndexConfigHFresh).quantizer).toBeDefined();
+    }
+    expect(response.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     expect(response.vectorizers.default.vectorizer.name).toEqual('text2vec-openai');
     expect(
       (response.vectorizers.default.vectorizer.config as Text2VecOpenAIConfig).vectorizeCollectionName
