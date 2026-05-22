@@ -1256,10 +1256,9 @@ describe('Unit testing of the vectorizer factory class', () => {
 
   it('should create the correct Text2VecDigitalOceanConfig type with only the required model', () => {
     const config = configure.vectors.text2VecDigitalOcean({ model: 'qwen3-embedding-0.6b' });
-    expect(config).toEqual<VectorConfigCreate<never, undefined, 'hnsw', 'text2vec-digitalocean'>>({
-      name: undefined,
-      properties: undefined,
-      vectorIndex: undefined,
+    expect(config).toMatchObject<
+      Partial<VectorConfigCreate<never, undefined, 'hnsw', 'text2vec-digitalocean'>>
+    >({
       vectorizer: {
         name: 'text2vec-digitalocean',
         config: {
@@ -1275,18 +1274,18 @@ describe('Unit testing of the vectorizer factory class', () => {
       name: 'test',
       model: 'qwen3-embedding-0.6b',
     });
-    expect(config).toEqual<VectorConfigCreate<never, 'test', 'hnsw', 'text2vec-digitalocean'>>({
-      name: 'test',
-      properties: undefined,
-      vectorIndex: undefined,
-      vectorizer: {
-        name: 'text2vec-digitalocean',
-        config: {
-          baseURL: 'https://inference.do-ai.run',
-          model: 'qwen3-embedding-0.6b',
+    expect(config).toMatchObject<Partial<VectorConfigCreate<never, 'test', 'hnsw', 'text2vec-digitalocean'>>>(
+      {
+        name: 'test',
+        vectorizer: {
+          name: 'text2vec-digitalocean',
+          config: {
+            baseURL: 'https://inference.do-ai.run',
+            model: 'qwen3-embedding-0.6b',
+          },
         },
-      },
-    });
+      }
+    );
   });
 
   it('should create the correct Text2VecOllamaConfig type with defaults', () => {

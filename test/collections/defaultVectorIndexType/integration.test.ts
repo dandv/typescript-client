@@ -2,28 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import weaviate, { WeaviateClient } from '../../../src/index.js';
 import { DbVersion } from '../../../src/utils/dbVersion.js';
 
-let client: WeaviateClient;
-let serverVersion: DbVersion;
-
-function expectedDefaultIndexType(version: DbVersion): 'hnsw' | 'hfresh' {
-  // 1.37.5+ defaults to server-defined (hfresh in these tests); older versions default to hnsw.
-  return version.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw';
-}
-
-/**
- * Assert that a collection's stored index type matches what the server/client
- * should have applied given the running version:
- *   - on newer servers, expect hfresh default
- *   - on older servers, expect legacy hnsw default
- */
-function assertDefaultIndexType(actual: string) {
-  expect(actual).toEqual(expectedDefaultIndexType(serverVersion));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Suite
 // ─────────────────────────────────────────────────────────────────────────────
 describe('defaultVectorIndexType', () => {
+  let client: WeaviateClient;
+  let serverVersion: DbVersion;
+  let expectedDefaultIndexType: 'hnsw' | 'hfresh';
+
   beforeAll(async () => {
     client = await weaviate.connectToLocal();
     const meta = await client.getMeta();
@@ -31,6 +17,7 @@ describe('defaultVectorIndexType', () => {
       throw new Error('Weaviate meta endpoint did not return a version');
     }
     serverVersion = DbVersion.fromString(meta.version);
+    expectedDefaultIndexType = serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw';
   }, 60_000);
 
   afterAll(async () => {
@@ -47,7 +34,7 @@ describe('defaultVectorIndexType', () => {
         vectorizers: weaviate.configure.vectors.selfProvided(),
       });
       const config = await client.collections.use(name).config.get();
-      assertDefaultIndexType(config.vectorizers.default.indexType);
+      expect(config.vectorizers.default.indexType).toEqual(expectedDefaultIndexType);
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }
@@ -61,7 +48,7 @@ describe('defaultVectorIndexType', () => {
         vectorizers: weaviate.configure.vectors.selfProvided({ name: 'main' }),
       });
       const config = await client.collections.use(name).config.get();
-      assertDefaultIndexType(config.vectorizers.main.indexType);
+      expect(config.vectorizers.main.indexType).toEqual(expectedDefaultIndexType);
     } finally {
       await client.collections.delete(name).catch(() => undefined);
     }

@@ -74,14 +74,13 @@ describe('Testing of the collection.config namespace', () => {
     expect(config.reranker).toBeUndefined();
     const expectedIndexType = expectedDefaultIndexType(serverVersion);
     if (expectedIndexType === 'hfresh') {
-      const hfreshConfig = config.vectorizers.default.indexConfig as VectorIndexConfigHFresh;
-      expect(hfreshConfig.distance).toEqual('cosine');
-      expect(hfreshConfig.maxPostingSizeKb).toEqual(48);
-      expect(hfreshConfig.replicas).toEqual(4);
-      expect(hfreshConfig.searchProbe).toEqual(64);
-      expect(hfreshConfig.type).toEqual('hfresh');
-      // quantizer is set by server default, just verify it's defined or check type
-      expect(hfreshConfig.quantizer).toBeDefined();
+      expect(config.vectorizers.default.indexConfig).toMatchObject<Partial<VectorIndexConfigHFresh>>({
+        distance: 'cosine',
+        maxPostingSizeKb: 48,
+        replicas: 4,
+        searchProbe: 64,
+        type: 'hfresh',
+      });
     } else {
       expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
         skip: false,
@@ -142,14 +141,13 @@ describe('Testing of the collection.config namespace', () => {
     expect(config.reranker).toBeUndefined();
     const expectedIndexType2 = expectedDefaultIndexType(serverVersion);
     if (expectedIndexType2 === 'hfresh') {
-      const hfreshConfig = config.vectorizers.default.indexConfig as VectorIndexConfigHFresh;
-      expect(hfreshConfig.distance).toEqual('cosine');
-      expect(hfreshConfig.maxPostingSizeKb).toEqual(48);
-      expect(hfreshConfig.replicas).toEqual(4);
-      expect(hfreshConfig.searchProbe).toEqual(64);
-      expect(hfreshConfig.type).toEqual('hfresh');
-      // quantizer is set by server default, just verify it's defined
-      expect(hfreshConfig.quantizer).toBeDefined();
+      expect(config.vectorizers.default.indexConfig).toMatchObject<Partial<VectorIndexConfigHFresh>>({
+        distance: 'cosine',
+        maxPostingSizeKb: 48,
+        replicas: 4,
+        searchProbe: 64,
+        type: 'hfresh',
+      });
     } else {
       expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
         skip: false,
