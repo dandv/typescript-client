@@ -63,8 +63,6 @@ jobs:
           npm ci
           ci/run_dependencies.sh ${{ matrix.versions.weaviate }}
       - name: "Run tests without authentication tests"
-        env:
-          DEFAULT_VECTOR_INDEX: hfresh
         run: WEAVIATE_VERSION=${{ matrix.versions.weaviate }} npm test
       - name: "Transpile the package"
         run: npm run build
@@ -100,7 +98,6 @@ jobs:
           WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           OKTA_CLIENT_SECRET: ${{ secrets.OKTA_CLIENT_SECRET }}
-          DEFAULT_VECTOR_INDEX: hfresh
         run: WEAVIATE_VERSION=${{ matrix.versions.weaviate }} npm test
       - name: "Stop Weaviate"
         run: ci/stop_dependencies.sh ${{ matrix.versions.weaviate }}

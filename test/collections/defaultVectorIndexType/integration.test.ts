@@ -6,8 +6,8 @@ let client: WeaviateClient;
 let serverVersion: DbVersion;
 
 function expectedDefaultIndexType(version: DbVersion): 'hnsw' | 'hfresh' {
-  // 1.38+ defaults to hfresh; older versions default to hnsw.
-  return version.isAtLeast(1, 38, 0) ? 'hfresh' : 'hnsw';
+  // 1.37.5+ defaults to server-defined (hfresh in these tests); older versions default to hnsw.
+  return version.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw';
 }
 
 /**
