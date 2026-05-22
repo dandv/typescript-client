@@ -20,6 +20,7 @@ import {
   Text2VecCohereConfig,
   Text2VecContextionaryConfig,
   Text2VecDatabricksConfig,
+  Text2VecDigitalOceanConfig,
   Text2VecGPT4AllConfig,
   Text2VecGoogleConfig,
   Text2VecGoogleGeminiConfig,
@@ -268,6 +269,8 @@ export type Text2VecJinaAIConfigCreate = Text2VecJinaAIConfig;
 
 export type Text2VecNvidiaConfigCreate = Text2VecNvidiaConfig;
 
+export type Text2VecDigitalOceanConfigCreate = Text2VecDigitalOceanConfig;
+
 export type Text2VecMistralConfigCreate = Text2VecMistralConfig;
 
 export type Text2VecModel2VecConfigCreate = Text2VecModel2Vec;
@@ -338,6 +341,8 @@ export type VectorizerConfigCreateType<V> = V extends 'img2vec-neural'
   ? Text2VecJinaAIConfigCreate | undefined
   : V extends 'text2vec-nvidia'
   ? Text2VecNvidiaConfigCreate | undefined
+  : V extends 'text2vec-digitalocean'
+  ? Text2VecDigitalOceanConfigCreate | undefined
   : V extends 'text2vec-mistral'
   ? Text2VecMistralConfigCreate | undefined
   : V extends 'text2vec-model2vec'
