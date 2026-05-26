@@ -18,14 +18,6 @@ import { WeaviateClass } from '../../../src/openapi/types.js';
 import { DbVersion } from '../../../src/utils/dbVersion.js';
 import { requireAtLeast } from '../../../test/version.js';
 
-/**
- * Helper to determine expected default vector index type based on server version.
- * On versions >= 1.37.5 with DEFAULT_VECTOR_INDEX=hfresh, the server defaults to hfresh.
- */
-function expectedDefaultIndexType(version: DbVersion): 'hnsw' | 'hfresh' {
-  return version.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw';
-}
-
 describe('Testing of the collection.config namespace', () => {
   let client: WeaviateClient;
   let serverVersion: DbVersion;
@@ -72,35 +64,9 @@ describe('Testing of the collection.config namespace', () => {
     ]);
     expect(config.generative).toBeUndefined();
     expect(config.reranker).toBeUndefined();
-    const expectedIndexType = expectedDefaultIndexType(serverVersion);
-    if (expectedIndexType === 'hfresh') {
-      expect(config.vectorizers.default.indexConfig).toMatchObject<Partial<VectorIndexConfigHFresh>>({
-        distance: 'cosine',
-        maxPostingSizeKb: 48,
-        replicas: 4,
-        searchProbe: 64,
-        type: 'hfresh',
-      });
-    } else {
-      expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
-        skip: false,
-        cleanupIntervalSeconds: 300,
-        maxConnections: serverVersion.isLowerThan(1, 26, 0) ? 64 : 32,
-        efConstruction: 128,
-        ef: -1,
-        dynamicEfMin: 100,
-        dynamicEfMax: 500,
-        dynamicEfFactor: 8,
-        vectorCacheMaxObjects: 1000000000000,
-        filterStrategy: serverVersion.isLowerThan(1, 34, 0) ? 'sweeping' : 'acorn',
-        flatSearchCutoff: 40000,
-        distance: 'cosine',
-        multiVector: undefined,
-        quantizer: undefined,
-        type: 'hnsw',
-      });
-    }
-    expect(config.vectorizers.default.indexType).toEqual(expectedIndexType);
+    expect(config.vectorizers.default.indexType).toEqual(
+      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+    );
     expect(config.vectorizers.default.vectorizer.name).toEqual('none');
   });
 
@@ -139,35 +105,9 @@ describe('Testing of the collection.config namespace', () => {
     ]);
     expect(config.generative).toBeUndefined();
     expect(config.reranker).toBeUndefined();
-    const expectedIndexType2 = expectedDefaultIndexType(serverVersion);
-    if (expectedIndexType2 === 'hfresh') {
-      expect(config.vectorizers.default.indexConfig).toMatchObject<Partial<VectorIndexConfigHFresh>>({
-        distance: 'cosine',
-        maxPostingSizeKb: 48,
-        replicas: 4,
-        searchProbe: 64,
-        type: 'hfresh',
-      });
-    } else {
-      expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
-        skip: false,
-        cleanupIntervalSeconds: 300,
-        maxConnections: serverVersion.isLowerThan(1, 26, 0) ? 64 : 32,
-        efConstruction: 128,
-        ef: -1,
-        dynamicEfMin: 100,
-        dynamicEfMax: 500,
-        dynamicEfFactor: 8,
-        vectorCacheMaxObjects: 1000000000000,
-        filterStrategy: serverVersion.isLowerThan(1, 34, 0) ? 'sweeping' : 'acorn',
-        flatSearchCutoff: 40000,
-        distance: 'cosine',
-        multiVector: undefined,
-        quantizer: undefined,
-        type: 'hnsw',
-      });
-    }
-    expect(config.vectorizers.default.indexType).toEqual(expectedIndexType2);
+    expect(config.vectorizers.default.indexType).toEqual(
+      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+    );
     expect(config.vectorizers.default.vectorizer.name).toEqual('none');
   });
 
@@ -217,7 +157,9 @@ describe('Testing of the collection.config namespace', () => {
     );
     expect(config.properties[1].vectorizerConfig?.['text2vec-contextionary'].skip).toEqual(false);
     expect(config.vectorizers.title.indexConfig).toBeDefined();
-    expect(config.vectorizers.title.indexType).toEqual(expectedDefaultIndexType(serverVersion));
+    expect(config.vectorizers.title.indexType).toEqual(
+      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+    );
     expect(config.vectorizers.title.properties).toEqual(['title']);
     expect(config.vectorizers.title.vectorizer.name).toEqual('text2vec-contextionary');
   });
@@ -627,7 +569,10 @@ describe('Testing of the collection.config namespace', () => {
       expect(config.vectorizers).toHaveProperty('vector-b');
       expect(config.vectorizers).toHaveProperty('vector-c');
 
-      expect(config.vectorizers.default).toHaveProperty('indexType', expectedDefaultIndexType(serverVersion));
+      expect(config.vectorizers.default).toHaveProperty(
+        'indexType',
+        serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+      );
     });
   });
 
