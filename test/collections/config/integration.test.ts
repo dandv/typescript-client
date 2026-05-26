@@ -157,9 +157,7 @@ describe('Testing of the collection.config namespace', () => {
     );
     expect(config.properties[1].vectorizerConfig?.['text2vec-contextionary'].skip).toEqual(false);
     expect(config.vectorizers.title.indexConfig).toBeDefined();
-    expect(config.vectorizers.title.indexType).toEqual(
-      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
-    );
+    expect(config.vectorizers.title.indexType).toEqual(serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw');
     expect(config.vectorizers.title.properties).toEqual(['title']);
     expect(config.vectorizers.title.vectorizer.name).toEqual('text2vec-contextionary');
   });
