@@ -237,15 +237,19 @@ export class DbVersion {
   }
 
   static fromString = (version: string) => {
+    // CI image tags may append an architecture suffix (for example: 1.37.5.amd64).
+    // Strip that suffix before semver parsing.
+    const normalizedVersion = version.replace(/\.(amd64|arm64|x86_64)$/, '');
+
     let regex = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
-    let match = version.match(regex);
+    let match = normalizedVersion.match(regex);
     if (match) {
       const [_, major, minor, patch] = match;
       return new DbVersion(parseInt(major, 10), parseInt(minor, 10), parseInt(patch, 10));
     }
 
     regex = /^v?(\d+)\.(\d+)$/;
-    match = version.match(regex);
+    match = normalizedVersion.match(regex);
     if (match) {
       const [_, major, minor] = match;
       return new DbVersion(parseInt(major, 10), parseInt(minor, 10));

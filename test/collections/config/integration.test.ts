@@ -15,13 +15,16 @@ import weaviate, {
   weaviateV2,
 } from '../../../src/index.js';
 import { WeaviateClass } from '../../../src/openapi/types.js';
+import { DbVersion } from '../../../src/utils/dbVersion.js';
 import { requireAtLeast } from '../../../test/version.js';
 
 describe('Testing of the collection.config namespace', () => {
   let client: WeaviateClient;
+  let serverVersion: DbVersion;
 
   beforeAll(async () => {
     client = await weaviate.connectToLocal();
+    serverVersion = await client.getWeaviateVersion();
   });
 
   afterAll(() => client.collections.deleteAll());
@@ -61,26 +64,9 @@ describe('Testing of the collection.config namespace', () => {
     ]);
     expect(config.generative).toBeUndefined();
     expect(config.reranker).toBeUndefined();
-    expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
-      skip: false,
-      cleanupIntervalSeconds: 300,
-      maxConnections: (await client.getWeaviateVersion().then((ver) => ver.isLowerThan(1, 26, 0))) ? 64 : 32,
-      efConstruction: 128,
-      ef: -1,
-      dynamicEfMin: 100,
-      dynamicEfMax: 500,
-      dynamicEfFactor: 8,
-      vectorCacheMaxObjects: 1000000000000,
-      filterStrategy: (await client.getWeaviateVersion().then((ver) => ver.isLowerThan(1, 34, 0)))
-        ? 'sweeping'
-        : 'acorn',
-      flatSearchCutoff: 40000,
-      distance: 'cosine',
-      multiVector: undefined,
-      quantizer: undefined,
-      type: 'hnsw',
-    });
-    expect(config.vectorizers.default.indexType).toEqual('hnsw');
+    expect(config.vectorizers.default.indexType).toEqual(
+      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+    );
     expect(config.vectorizers.default.vectorizer.name).toEqual('none');
   });
 
@@ -119,26 +105,9 @@ describe('Testing of the collection.config namespace', () => {
     ]);
     expect(config.generative).toBeUndefined();
     expect(config.reranker).toBeUndefined();
-    expect(config.vectorizers.default.indexConfig).toEqual<VectorIndexConfigHNSW>({
-      skip: false,
-      cleanupIntervalSeconds: 300,
-      maxConnections: (await client.getWeaviateVersion().then((ver) => ver.isLowerThan(1, 26, 0))) ? 64 : 32,
-      efConstruction: 128,
-      ef: -1,
-      dynamicEfMin: 100,
-      dynamicEfMax: 500,
-      dynamicEfFactor: 8,
-      vectorCacheMaxObjects: 1000000000000,
-      filterStrategy: (await client.getWeaviateVersion().then((ver) => ver.isLowerThan(1, 34, 0)))
-        ? 'sweeping'
-        : 'acorn',
-      flatSearchCutoff: 40000,
-      distance: 'cosine',
-      multiVector: undefined,
-      quantizer: undefined,
-      type: 'hnsw',
-    });
-    expect(config.vectorizers.default.indexType).toEqual('hnsw');
+    expect(config.vectorizers.default.indexType).toEqual(
+      serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+    );
     expect(config.vectorizers.default.vectorizer.name).toEqual('none');
   });
 
@@ -188,7 +157,7 @@ describe('Testing of the collection.config namespace', () => {
     );
     expect(config.properties[1].vectorizerConfig?.['text2vec-contextionary'].skip).toEqual(false);
     expect(config.vectorizers.title.indexConfig).toBeDefined();
-    expect(config.vectorizers.title.indexType).toEqual('hnsw');
+    expect(config.vectorizers.title.indexType).toEqual(serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw');
     expect(config.vectorizers.title.properties).toEqual(['title']);
     expect(config.vectorizers.title.vectorizer.name).toEqual('text2vec-contextionary');
   });
@@ -598,7 +567,10 @@ describe('Testing of the collection.config namespace', () => {
       expect(config.vectorizers).toHaveProperty('vector-b');
       expect(config.vectorizers).toHaveProperty('vector-c');
 
-      expect(config.vectorizers.default).toHaveProperty('indexType', 'hnsw');
+      expect(config.vectorizers.default).toHaveProperty(
+        'indexType',
+        serverVersion.isAtLeast(1, 37, 5) ? 'hfresh' : 'hnsw'
+      );
     });
   });
 
@@ -676,7 +648,10 @@ describe('Testing of the collection.config namespace', () => {
           dataType: 'text',
         },
       ],
-      vectorizers: weaviate.configure.vectors.none(),
+      // Explicitly use hnsw to allow reconfiguration with hnsw options
+      vectorizers: weaviate.configure.vectors.none({
+        vectorIndexConfig: weaviate.configure.vectorIndex.hnsw(),
+      }),
     });
     const supportsUpdatingPropertyDescriptions = await client
       .getWeaviateVersion()
@@ -821,6 +796,8 @@ describe('Testing of the collection.config namespace', () => {
       .withClass({
         class: collectionName,
         vectorizer: 'none',
+        // Explicitly use hnsw to allow reconfiguration with hnsw options
+        vectorIndexType: 'hnsw',
       })
       .do();
     const collection = client.collections.use(collectionName);

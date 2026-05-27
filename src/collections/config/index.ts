@@ -53,9 +53,9 @@ const config = <T>(
         .then(() => {}),
     addVector: async (vectors: VectorizersConfigAdd<T>) => {
       const { vectorsConfig } = makeVectorsConfig(vectors);
-      const { supports: serverAppliesDefaultVIT } =
+      const { supports: serverAppliesDefaultVectorIndexType } =
         await dbVersionSupport.supportsServerSideDefaultVectorIndexType();
-      if (!serverAppliesDefaultVIT && vectorsConfig) {
+      if (!serverAppliesDefaultVectorIndexType && vectorsConfig) {
         for (const v of Object.values(vectorsConfig)) {
           if (!(v as any).vectorIndexType) (v as any).vectorIndexType = 'hnsw';
         }
