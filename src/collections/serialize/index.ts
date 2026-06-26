@@ -1283,11 +1283,6 @@ export class Serialize {
     });
   };
 
-  // TODO(dyma): delete unused
-  private static vectorToBuffer = (vector: number[]): ArrayBufferLike => {
-    return new Float32Array(vector).buffer;
-  };
-
   private static vectorToBytes = (vector: number[]): Uint8Array => {
     const uint32len = 4;
     const dv = new DataView(new ArrayBuffer(vector.length * uint32len));
