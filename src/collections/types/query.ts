@@ -198,8 +198,8 @@ export type MMR = {
   balance?: number;
 };
 
-export class Diversity {
-  static isMMR(diversity: DiversityConfig): diversity is MMR {
+export class DiversityGuards {
+  static isMMR(diversity?: DiversityConfig): diversity is MMR {
     return (diversity as MMR)?.type === 'mmr';
   }
 }

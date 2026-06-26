@@ -113,8 +113,8 @@ import {
   AggregateHybridOptions,
   AggregateNearOptions,
   BatchReference,
-  Diversity,
   DiversityConfig,
+  DiversityGuards,
   GenerativeConfigRuntime,
   GroupByAggregate,
   GroupedTask,
@@ -636,7 +636,7 @@ class Search {
 
   public static selection = (diversity?: DiversityConfig): Selection => {
     const selection: Selection = {};
-    if (Diversity.isMMR(diversity)) {
+    if (DiversityGuards.isMMR(diversity)) {
       selection.mmr = Selection_MMR.fromPartial({
         balance: diversity.balance,
         limit: diversity.limit,

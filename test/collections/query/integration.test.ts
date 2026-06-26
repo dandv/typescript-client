@@ -7,6 +7,7 @@ import weaviate, {
   Bm25Operator,
   Collection,
   CrossReference,
+  Diversity,
   GroupByOptions,
   Reference,
   WeaviateClient,
@@ -180,6 +181,13 @@ describe('Testing of the collection.query methods with a simple collection', () 
       expect(ret.objects[0].properties.testProp).toEqual('carrot');
       expect(ret.objects[0].uuid).toEqual(id);
     });
+  });
+
+  requireAtLeast(1, 37, 8).it('near text query with diversity selection', async () => {
+    const ret = await collection.query.nearText(['carrot'], {
+      diversity: Diversity.mmr({ limit: 1 }),
+    });
+    expect(ret.objects).toHaveLength(1);
   });
 
   it('should query with hybrid and vector', async () => {
