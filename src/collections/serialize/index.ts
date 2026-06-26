@@ -634,15 +634,16 @@ class Search {
     });
   };
 
-  public static selection = (diversity?: DiversityConfig): Selection => {
-    const selection: Selection = {};
+  public static selection = (diversity?: DiversityConfig): Selection | undefined => {
     if (DiversityGuards.isMMR(diversity)) {
-      selection.mmr = Selection_MMR.fromPartial({
-        balance: diversity.balance,
-        limit: diversity.limit,
-      });
+      return {
+        mmr: Selection_MMR.fromPartial({
+          balance: diversity.balance,
+          limit: diversity.limit,
+        }),
+      };
     }
-    return selection;
+    return undefined;
   };
 
   public static groupBy = <T>(groupBy?: GroupByOptions<T>): GroupBy => {
