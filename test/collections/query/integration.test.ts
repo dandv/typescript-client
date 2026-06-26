@@ -183,11 +183,19 @@ describe('Testing of the collection.query methods with a simple collection', () 
     });
   });
 
-  requireAtLeast(1, 37, 8).it('near text query with diversity selection', async () => {
-    const ret = await collection.query.nearText(['carrot'], {
-      diversity: Diversity.mmr({ limit: 1 }),
+  requireAtLeast(1, 37, 8).describe('near text query with diversity selection', () => {
+    it('using Diversity factory', async () => {
+      const ret = await collection.query.nearText(['carrot'], {
+        diversity: Diversity.mmr({ limit: 1 }),
+      });
+      expect(ret.objects).toHaveLength(1);
     });
-    expect(ret.objects).toHaveLength(1);
+    it('using manual object construction', async () => {
+      const ret = await collection.query.nearText(['carrot'], {
+        diversity: { type: 'mmr', limit: 1 },
+      });
+      expect(ret.objects).toHaveLength(1);
+    });
   });
 
   it('should query with hybrid and vector', async () => {
